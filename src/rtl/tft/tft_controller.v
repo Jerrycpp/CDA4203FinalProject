@@ -2,25 +2,26 @@ module tft_controller (
     input clk, // 10 MHz clock
     input rst,
 
-    input pixel_true,
-    output [17:0] pixel,
+    input pixel,
+    output [9:0] tft_hcount,
+    output [9:0] tft_vcount,
 
     output reg TFT_VDDEN_O,
-    output reg TFT_CLK_O,
+    output TFT_CLK_O,
     output TFT_DE_O,
     output reg TFT_DISP_O,
-    output reg TFT_BKLT_O,
+    output TFT_BKLT_O,
     output [7:0] TFT_B_O,
     output [7:0] TFT_G_O,
     output [7:0] TFT_R_O
 );
     // Counter and constant delay amount of cycles
-    reg [22:0] counter;
+    reg [31:0] counter;
     reg counter_rst;
-    localparam POWER_UP_DELAY = 10000 - 1; // 1 ms
-    localparam POWER_COOLDOWN = 2000000 - 1; // 200 ms
-    localparam BACKLIGHT_WARMUP = 2000000 - 1;
-    localparam BACKLIGHT_COOLDOWN = 2000000 - 1;
+    localparam POWER_UP_DELAY = 100000 - 1; // 1 ms
+    localparam POWER_COOLDOWN = 20000000 - 1; // 200 ms
+    localparam BACKLIGHT_WARMUP = 20000000 - 1;
+    localparam BACKLIGHT_COOLDOWN = 20000000 - 1;
     //
 
 
@@ -73,29 +74,31 @@ module tft_controller (
         endcase
     end
 
+    reg TFT_CLK_EN;
+    reg TFT_BKLT_EN;
     always@(*) begin
         TFT_VDDEN_O = 0;
-        TFT_CLK_O = 0;
+        TFT_CLK_EN = 0;
         TFT_DISP_O = 0;
-        TFT_BKLT_O = 0;
+        TFT_BKLT_EN = 0;
         case (state)
             IDLE : begin
                 TFT_VDDEN_O = 1;
             end
             LEDWARMUP : begin
                 TFT_VDDEN_O = 1;
-                TFT_CLK_O = clk;
+                TFT_CLK_EN = 1;
                 TFT_DISP_O = 1;
             end
             ON : begin
                 TFT_VDDEN_O = 1;
-                TFT_CLK_O = clk;
+                TFT_CLK_EN = 1;
                 TFT_DISP_O = 1;
-                TFT_BKLT_O = 1;
+                TFT_BKLT_EN = 1;
             end
             LEDCOOLDOWN : begin
                 TFT_VDDEN_O = 1;
-                TFT_CLK_O = clk;
+                TFT_CLK_EN = 1;
                 TFT_DISP_O = 1;
             end
             PWRCOOLDOWN : begin
@@ -107,8 +110,17 @@ module tft_controller (
         endcase
     end
 
+    wire int_bklt;
+    pwm pwm_inst (
+        .clk  (clk),
+        .rst  (rst),
+        .pwm_o(int_bklt)
+    );
+    assign TFT_BKLT_O = (TFT_BKLT_EN) ? int_bklt : 0;
+
     always@(posedge clk) begin
-        state <= next_state;
+			if (rst) state <= IDLE;
+        else state <= next_state;
     end
 
     always@(posedge clk) begin
@@ -122,51 +134,92 @@ module tft_controller (
 
     // Display-related registers and parameters
     localparam HACTIVE = 480, VACTIVE = 272, HTOTAL = 525, VTOTAL = 288;
-    reg [9:0] vcount, hcount;
-    reg int_de;
-    reg [7:0] int_r, int_g, int_b;
+    (*KEEP="TRUE"*) reg [9:0] vcount = 0;
+	 (*KEEP="TRUE"*) reg [9:0] hcount = 0;
+    (*KEEP="TRUE"*) reg int_de = 0;
+    reg [7:0] int_r = 0, int_g = 0, int_b = 0;
     //
-    
-
-    assign TFT_DE_O = (state == IDLE || state == PWRCOOLDOWN) ? 0 : int_de;
-    assign TFT_R_O = (state == IDLE || state == PWRCOOLDOWN) ? 8'hFF : int_r;
-    assign TFT_G_O = (state == IDLE || state == PWRCOOLDOWN) ? 8'hFF : int_g;
-    assign TFT_B_O = (state == IDLE || state == PWRCOOLDOWN) ? 8'hFF : int_b;
-    assign pixel = (hcount < HACTIVE && vcount < VACTIVE) ? {vcount[8:0], hcount[8:0]} : 0;  
-
+    reg [2:0] clk_counter;
+    reg clk_10mhz;
     always@(posedge clk) begin
         if (rst) begin
-            vcount <= 0;
-            hcount <= 0;
+            clk_counter <= 0;
+            clk_10mhz <= 0;
+        end
+        else if (~TFT_CLK_EN) begin
+            clk_counter <= 0;
+            clk_10mhz <= 0;
         end
         else begin
-            if (hcount == HTOTAL - 1) begin
-                if (vcount == VTOTAL - 1) begin
-                    vcount <= 0;
-                    hcount <= 0;
-                end
-                else begin
-                    hcount <= 0;
-                    vcount <= vcount + 1;
-                end
+
+            if (clk_counter == 4) begin
+                clk_counter <= 0;
+                clk_10mhz <= ~clk_10mhz;
             end
             else begin
-                hcount <= hcount + 1;
+                clk_counter <= clk_counter + 1;
             end
+        end
+    end
+    assign TFT_CLK_O = clk_10mhz;
+
+    assign TFT_DE_O = (state == IDLE || state == PWRCOOLDOWN) ? 0 : int_de;
+    assign TFT_R_O = (TFT_DE_O) ? int_r : 8'h0;
+    assign TFT_G_O = (TFT_DE_O) ? int_g : 8'h0;
+    assign TFT_B_O = (TFT_DE_O) ? int_b : 8'h0;
+    
+    assign tft_hcount = hcount;
+    assign tft_vcount = vcount;
+    always@(posedge clk) begin
+        if (rst) begin
+            vcount <= VTOTAL - 1;
+            hcount <= HTOTAL - 1;
+            int_de <= 0;
+        end
+        else begin
+            if (clk_counter == 4 && clk_10mhz == 0) begin
+                if (hcount == HTOTAL - 1) begin
+                    if (vcount == VTOTAL - 1) begin
+                        vcount <= 0;
+                        hcount <= 0;
+                    end
+                    else begin
+                        hcount <= 0;
+                        vcount <= vcount + 1;
+                    end
+                end
+                else begin
+                    hcount <= hcount + 1;
+                end
+                if ((hcount == HTOTAL - 1 && (vcount == VTOTAL - 1 || vcount < VACTIVE - 1)) || (hcount < HACTIVE - 1 && vcount < VACTIVE)) begin
+                    int_de <= 1;
+                end
+                else begin
+                    int_de <= 0;
+                end
+            end
+				else begin
+					hcount <= hcount;
+					vcount <= vcount;
+				end
         end
     end
 
-    always@(*) begin
-        int_de = 0;
-        int_r = 0;
-        int_g = 0;
-        int_b = 0;
-        if (hcount < HACTIVE && vcount < VACTIVE) begin
-            int_de = 1;
-            int_r = (pixel_true) ? 8'h0 : 8'hFF;
-            int_g = (pixel_true) ? 8'h0 : 8'hFF;
-            int_b = (pixel_true) ? 8'h0 : 8'hFF;
-        end
-    end
+    always@(posedge clk) begin
+		if (rst) begin
+			int_r <= 0;
+			int_g <= 0;
+			int_b <= 0;
+		end
+		else begin
+			if (clk_counter == 4 && clk_10mhz == 0) begin
+				int_r <= (pixel) ? 8'h0 : 8'hff;
+				int_g <= (pixel) ? 8'h0 : 8'hff;
+				int_b <= (pixel) ? 8'h0 : 8'hff;
+			end
+		end
+	 end
+
+    
     
 endmodule
