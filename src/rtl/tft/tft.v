@@ -5,8 +5,6 @@ module tft (
     input write_en,
     input [7:0] write_dat,
 
-
-
     input set_x_cursor_en,
     input [5:0] set_x_cursor,
 

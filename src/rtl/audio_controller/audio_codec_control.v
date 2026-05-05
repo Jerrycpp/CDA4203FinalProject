@@ -1,9 +1,26 @@
-module audio_codec_control (
-    input audio_clk,
-    input audio_codec_clk,
+//
+// Demo of Analog Devices SSM2603 audio codec
+// Digilent Anvyl Board
+// Source: Github: https://github.com/zhemao/rtaudio_effects/tree/part8
+// https://zhehaomao.com/blog/fpga/2014/01/15/sockit-8.html
+//
+// Srinivas Katkoori 20 Apr 2018
+//
+// To hear the results of the test hardware on the FPGA, 
+// plug your speakers into the green audio port 
+// and the microphone into the pink audio port. Flip SW7 
+// to hear the sine wave and SW6 to hear the microphone feedback. 
+// If you are using headphones, strongly suggest that 
+// you do not actually put them on in the sine wave mode, 
+// as the volume at 0 dB is quite loud.
+//  SW7 - Pure tone mode
+//  SW6 - Feedback mode
+//  SW0 - Active Low Reset
+
+module sockit_top (
+    input  clk,
     input rst,
 
-    // Audio codec I/O
     inout  AUD_ADCLRCK,
     input  AUD_ADCDAT,
 
@@ -19,49 +36,72 @@ module audio_codec_control (
     output AUD_MUTE,
 	output PLL_LOCKED,
 
-    // From audio_controller
-    input [15:0] audio_out,
-    input audio_out_valid,
+    input [7:0] SW,
 
-    // To audio_controller
-    output [15:0] audio_in,
-    output audio_in_valid
+    input [15:0] ddr2_audio_input,
+    input ddr2_audio_input_valid,
+
+    output 
 );
-    wire [15:0] audio_input, audio_output;
-    wire [1:0] sample_end;
-    wire [1:0] sample_req;
 
-    audio_codec ac (
-        .clk (audio_codec_clk),
-        .reset (rst),
-        .sample_end (sample_end),
-        .sample_req (sample_req),
-        .audio_output (audio_output),
-        .audio_input (audio_input),
-        .channel_sel (2'b10),
 
-        .AUD_ADCLRCK (AUD_ADCLRCK),
-        .AUD_ADCDAT (AUD_ADCDAT),
-        .AUD_DACLRCK (AUD_DACLRCK),
-        .AUD_DACDAT (AUD_DACDAT),
-        .AUD_BCLK (AUD_BCLK)
-    );
+wire main_clk;
+wire audio_clk;
 
-    i2c_av_config av_config (
-        .clk (audio_clk),
-        .reset (rst),
-        .i2c_sclk (AUD_I2C_SCLK),
-        .i2c_sdat (AUD_I2C_SDAT),
-        .status ()
-    );
+wire [1:0] sample_end;
+wire [1:0] sample_req;
+wire [15:0] audio_output;
+wire [15:0] audio_input;
 
-    // audio_effects ae (
-    //     .clk (audio_clk),
-    //     .sample_end (sample_end[1]),
-    //     .sample_req (sample_req[1]),
-    //     .audio_output (audio_output),
-    //     .audio_input  (audio_input),
-    //     .control (1)
-    // );
+// Clock PLL that synthesizes two frequencies: 50 MHz and 11.2896 MHz
+// Input 100 MHz 
+clk_wiz_v3_6 pll (
+	 .CLK_IN1 (clk),
+	 .CLK_OUT1 (main_clk),   // 50 MHz
+    .CLK_OUT2 (audio_clk),  // 11.2896 MHz
+	 .RESET (rst),
+	 .LOCKED (PLL_LOCKED)
+);
+
+// I2C Protocol - FPGA is Master, Codec is Slave
+i2c_av_config i2c_av_config (
+    .clk     (main_clk),
+    .reset   (rst),
+    .volume  (SW),
+    .i2c_sclk(AUD_I2C_SCLK),
+    .i2c_sdat(AUD_I2C_SDAT)
+);
+assign AUD_XCK = audio_clk;
+assign AUD_MUTE = 1'b1;  // active low, so set to 1 and disable mute
+
+// Serial to parallel conversion 
+audio_codec ac (
+    .clk (audio_clk),
+    .reset (rst),
+    .sample_end (sample_end),
+    .sample_req (sample_req),
+    .audio_output (audio_output),
+    .audio_input (audio_input),
+    .channel_sel (2'b10),
+
+    .AUD_ADCLRCK (AUD_ADCLRCK),
+    .AUD_ADCDAT (AUD_ADCDAT),
+    .AUD_DACLRCK (AUD_DACLRCK),
+    .AUD_DACDAT (AUD_DACDAT),
+    .AUD_BCLK (AUD_BCLK)
+);
+
+
+audio_effects audio_effects (
+    .clk                    (main_clk),
+    .sample_end             (sample_end[1]),
+    .sample_req             (sample_req[1]),
+    .audio_output           (audio_output),
+    .audio_input            (audio_input),
+    .ddr2_audio_output      (ddr2_audio_output),
+    .ddr2_audio_output_valid(ddr2_audio_output_valid),
+    .ddr2_audio_input       (ddr2_audio_input),
+    .ddr2_audio_output_valid(ddr2_audio_output_valid)
+);
 
 endmodule

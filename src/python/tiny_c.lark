@@ -1,0 +1,71 @@
+?start: program
+
+program: function+
+
+?type_spec: "int" | "char"
+
+function: type_spec CNAME "(" param_list? ")" block
+
+param_list: type_spec CNAME ("," type_spec CNAME)*
+
+block: "{" statement* "}"
+
+?statement: var_decl
+          | assign
+          | while_loop
+          | for_loop
+          | conditional
+          | return_stmt
+          | function_call ";"
+          | inline_psm
+
+inline_psm: "__psm__" "(" STRING ")" ";"
+
+var_decl: type_spec CNAME ["=" expr] ";"
+
+assign: CNAME "=" expr ";"
+
+while_loop: "while" "(" expr ")" block
+for_loop: "for" "(" (var_decl | assign)? expr? ";" assign_no_semi? ")" block
+assign_no_semi: CNAME "=" expr
+conditional: "if" "(" expr ")" block ("else" "if" "(" expr ")" block)* ["else" block]
+return_stmt: "return" expr ";"
+
+?expr: logic_or
+?logic_or: logic_and (LOGOR logic_and)*
+?logic_and: equality (LOGAND equality)*
+?equality: comparison (EQOP comparison)*
+?comparison: term (COMPOP term)*
+?term: factor (ADDOP factor)*
+?factor: primary (MULOP primary)*
+
+LOGOR: "||"
+LOGAND: "&&"
+EQOP: "==" | "!="
+COMPOP: "<" | "<=" | ">" | ">="
+ADDOP: "+" | "-"
+MULOP: "*" | "/"
+
+?primary: NUMBER
+        | CNAME
+        | CHAR_LITERAL
+        | STRING
+        | function_call
+        | "(" expr ")"
+
+function_call: CNAME "(" [expr ("," expr)*] ")"
+
+CHAR_LITERAL: /'.'|'\\.'/
+
+%import common.CNAME
+%import common.INT -> NUMBER
+%import common.WS
+%import common.ESCAPED_STRING -> STRING
+
+%ignore WS
+
+LINE_COMMENT: "//" /[^\n]*/
+BLOCK_COMMENT: "/*" /(.|\n)*?/ "*/"
+
+%ignore LINE_COMMENT
+%ignore BLOCK_COMMENT
