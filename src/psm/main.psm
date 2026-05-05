@@ -1,0 +1,572 @@
+; -- SYSTEM BOOT --
+LOAD sF, FF  ; Init Stack Pointer (sF)
+CALL main  ; Begin execution
+SYSTEM_HALT: JUMP SYSTEM_HALT
+; -------------
+
+delay_1s:
+; Prolouge: Saving Callee-Saved Registers
+STORE sA, (sF)  ; Push sA to stack
+SUB sF, 01    ; Move SP down
+STORE sB, (sF)  ; Push sB to stack
+SUB sF, 01    ; Move SP down
+STORE sC, (sF)  ; Push sC to stack
+SUB sF, 01    ; Move SP down
+STORE sD, (sF)  ; Push sD to stack
+SUB sF, 01    ; Move SP down
+STORE sE, (sF)  ; Push sE to stack
+SUB sF, 01    ; Move SP down
+LOAD s4, 00
+LOAD sA, s4  ; i = [result]
+
+L_WHILE_START_0:
+LOAD s4, sA  ; Copy 'i' for math
+LOAD s5, FF
+COMPARE s5, s4  ; OPERANDS SWAPPED!
+JUMP C, L_WHILE_END_0   ; Jump away if right < left
+LOAD s5, 00
+LOAD s4, s5  ; j = [result]
+
+L_WHILE_START_1:
+LOAD s5, sA  ; Copy 'i' for math
+LOAD s6, FF
+COMPARE s6, s5  ; OPERANDS SWAPPED!
+JUMP C, L_WHILE_END_1   ; Jump away if right < left
+LOAD s6, 00
+LOAD s5, s6  ; k = [result]
+
+L_WHILE_START_2:
+LOAD s6, s5  ; Copy 'k' for math
+LOAD s7, FF
+COMPARE s7, s6  ; OPERANDS SWAPPED!
+JUMP C, L_WHILE_END_2   ; Jump away if right < left
+LOAD s0, s0  ; [Inline Assembly Injected]
+LOAD s0, s0  ; [Inline Assembly Injected]
+LOAD s0, s0  ; [Inline Assembly Injected]
+LOAD s0, s0  ; [Inline Assembly Injected]
+LOAD s0, s0  ; [Inline Assembly Injected]
+LOAD s0, s0  ; [Inline Assembly Injected]
+LOAD s6, s5  ; Copy 'k' for math
+LOAD s7, 01
+ADD s6, s7
+LOAD s5, s6  ; k = [result]
+JUMP L_WHILE_START_2
+L_WHILE_END_2:
+LOAD s6, s4  ; Copy 'j' for math
+LOAD s7, 01
+ADD s6, s7
+LOAD s4, s6  ; j = [result]
+JUMP L_WHILE_START_1
+L_WHILE_END_1:
+LOAD s5, sA  ; Copy 'i' for math
+LOAD s6, 01
+ADD s5, s6
+LOAD sA, s5  ; i = [result]
+JUMP L_WHILE_START_0
+L_WHILE_END_0:
+L_delay_1s_END:
+; Epilouge
+ADD sF, 01    ; Move SP up
+FETCH sE, (sF)  ; Pop sE from stack
+ADD sF, 01    ; Move SP up
+FETCH sD, (sF)  ; Pop sD from stack
+ADD sF, 01    ; Move SP up
+FETCH sC, (sF)  ; Pop sC from stack
+ADD sF, 01    ; Move SP up
+FETCH sB, (sF)  ; Pop sB from stack
+ADD sF, 01    ; Move SP up
+FETCH sA, (sF)  ; Pop sA from stack
+RETURN
+
+delay:
+; Prolouge: Saving Callee-Saved Registers
+STORE sA, (sF)  ; Push sA to stack
+SUB sF, 01    ; Move SP down
+STORE sB, (sF)  ; Push sB to stack
+SUB sF, 01    ; Move SP down
+STORE sC, (sF)  ; Push sC to stack
+SUB sF, 01    ; Move SP down
+STORE sD, (sF)  ; Push sD to stack
+SUB sF, 01    ; Move SP down
+STORE sE, (sF)  ; Push sE to stack
+SUB sF, 01    ; Move SP down
+LOAD sA, s0  ; param 'seconds' from s0
+LOAD s4, 00
+LOAD sB, s4  ; i = [result]
+
+L_WHILE_START_3:
+LOAD s4, sB  ; Copy 'i' for math
+LOAD s5, sA  ; Copy 'seconds' for math
+COMPARE s4, s5
+JUMP NC, L_WHILE_END_3  ; Jump away if left >= right
+
+; -- Calling delay_1s() --
+CALL delay_1s
+LOAD s4, s0  ; Capture return value from delay_1s
+; -- End Call -- 
+
+LOAD s4, sB  ; Copy 'i' for math
+LOAD s5, 01
+ADD s4, s5
+LOAD sB, s4  ; i = [result]
+JUMP L_WHILE_START_3
+L_WHILE_END_3:
+L_delay_END:
+; Epilouge
+ADD sF, 01    ; Move SP up
+FETCH sE, (sF)  ; Pop sE from stack
+ADD sF, 01    ; Move SP up
+FETCH sD, (sF)  ; Pop sD from stack
+ADD sF, 01    ; Move SP up
+FETCH sC, (sF)  ; Pop sC from stack
+ADD sF, 01    ; Move SP up
+FETCH sB, (sF)  ; Pop sB from stack
+ADD sF, 01    ; Move SP up
+FETCH sA, (sF)  ; Pop sA from stack
+RETURN
+
+clean_screen:
+; Prolouge: Saving Callee-Saved Registers
+STORE sA, (sF)  ; Push sA to stack
+SUB sF, 01    ; Move SP down
+STORE sB, (sF)  ; Push sB to stack
+SUB sF, 01    ; Move SP down
+STORE sC, (sF)  ; Push sC to stack
+SUB sF, 01    ; Move SP down
+STORE sD, (sF)  ; Push sD to stack
+SUB sF, 01    ; Move SP down
+STORE sE, (sF)  ; Push sE to stack
+SUB sF, 01    ; Move SP down
+LOAD s4, 00
+OUTPUT s4, 02  ; output to port 02
+LOAD s4, 00  ; output() void return
+LOAD s4, 00
+OUTPUT s4, 04  ; output to port 04
+LOAD s4, 00  ; output() void return
+LOAD s4, 00
+LOAD sA, s4  ; i = [result]
+
+L_WHILE_START_4:
+LOAD s4, sA  ; Copy 'i' for math
+LOAD s5, 11
+COMPARE s4, s5
+JUMP NC, L_WHILE_END_4  ; Jump away if left >= right
+LOAD s5, 00
+LOAD s4, s5  ; j = [result]
+
+L_WHILE_START_5:
+LOAD s5, s4  ; Copy 'j' for math
+LOAD s6, 3C
+COMPARE s5, s6
+JUMP NC, L_WHILE_END_5  ; Jump away if left >= right
+
+; -- print(" ") on port 01 --
+LOAD s5, 20  ; ' '
+OUTPUT s5, 01
+; -- end print --
+
+LOAD s5, 00  ; print() void return
+LOAD s5, s4  ; Copy 'j' for math
+LOAD s6, 01
+ADD s5, s6
+LOAD s4, s5  ; j = [result]
+JUMP L_WHILE_START_5
+L_WHILE_END_5:
+LOAD s5, sA  ; Copy 'i' for math
+LOAD s6, 01
+ADD s5, s6
+LOAD sA, s5  ; i = [result]
+JUMP L_WHILE_START_4
+L_WHILE_END_4:
+L_clean_screen_END:
+; Epilouge
+ADD sF, 01    ; Move SP up
+FETCH sE, (sF)  ; Pop sE from stack
+ADD sF, 01    ; Move SP up
+FETCH sD, (sF)  ; Pop sD from stack
+ADD sF, 01    ; Move SP up
+FETCH sC, (sF)  ; Pop sC from stack
+ADD sF, 01    ; Move SP up
+FETCH sB, (sF)  ; Pop sB from stack
+ADD sF, 01    ; Move SP up
+FETCH sA, (sF)  ; Pop sA from stack
+RETURN
+
+print_menu:
+; Prolouge: Saving Callee-Saved Registers
+STORE sA, (sF)  ; Push sA to stack
+SUB sF, 01    ; Move SP down
+STORE sB, (sF)  ; Push sB to stack
+SUB sF, 01    ; Move SP down
+STORE sC, (sF)  ; Push sC to stack
+SUB sF, 01    ; Move SP down
+STORE sD, (sF)  ; Push sD to stack
+SUB sF, 01    ; Move SP down
+STORE sE, (sF)  ; Push sE to stack
+SUB sF, 01    ; Move SP down
+
+; -- print("1. Play a recording\n") on port 01 --
+LOAD s4, 31  ; '1'
+OUTPUT s4, 01
+LOAD s4, 2E  ; '.'
+OUTPUT s4, 01
+LOAD s4, 20  ; ' '
+OUTPUT s4, 01
+LOAD s4, 50  ; 'P'
+OUTPUT s4, 01
+LOAD s4, 6C  ; 'l'
+OUTPUT s4, 01
+LOAD s4, 61  ; 'a'
+OUTPUT s4, 01
+LOAD s4, 79  ; 'y'
+OUTPUT s4, 01
+LOAD s4, 20  ; ' '
+OUTPUT s4, 01
+LOAD s4, 61  ; 'a'
+OUTPUT s4, 01
+LOAD s4, 20  ; ' '
+OUTPUT s4, 01
+LOAD s4, 72  ; 'r'
+OUTPUT s4, 01
+LOAD s4, 65  ; 'e'
+OUTPUT s4, 01
+LOAD s4, 63  ; 'c'
+OUTPUT s4, 01
+LOAD s4, 6F  ; 'o'
+OUTPUT s4, 01
+LOAD s4, 72  ; 'r'
+OUTPUT s4, 01
+LOAD s4, 64  ; 'd'
+OUTPUT s4, 01
+LOAD s4, 69  ; 'i'
+OUTPUT s4, 01
+LOAD s4, 6E  ; 'n'
+OUTPUT s4, 01
+LOAD s4, 67  ; 'g'
+OUTPUT s4, 01
+LOAD s4, 0A  ; '\x0A'
+OUTPUT s4, 01
+; -- end print --
+
+LOAD s4, 00  ; print() void return
+
+; -- print("2. Record\n") on port 01 --
+LOAD s4, 32  ; '2'
+OUTPUT s4, 01
+LOAD s4, 2E  ; '.'
+OUTPUT s4, 01
+LOAD s4, 20  ; ' '
+OUTPUT s4, 01
+LOAD s4, 52  ; 'R'
+OUTPUT s4, 01
+LOAD s4, 65  ; 'e'
+OUTPUT s4, 01
+LOAD s4, 63  ; 'c'
+OUTPUT s4, 01
+LOAD s4, 6F  ; 'o'
+OUTPUT s4, 01
+LOAD s4, 72  ; 'r'
+OUTPUT s4, 01
+LOAD s4, 64  ; 'd'
+OUTPUT s4, 01
+LOAD s4, 0A  ; '\x0A'
+OUTPUT s4, 01
+; -- end print --
+
+LOAD s4, 00  ; print() void return
+
+; -- print("3. Delete a message\n") on port 01 --
+LOAD s4, 33  ; '3'
+OUTPUT s4, 01
+LOAD s4, 2E  ; '.'
+OUTPUT s4, 01
+LOAD s4, 20  ; ' '
+OUTPUT s4, 01
+LOAD s4, 44  ; 'D'
+OUTPUT s4, 01
+LOAD s4, 65  ; 'e'
+OUTPUT s4, 01
+LOAD s4, 6C  ; 'l'
+OUTPUT s4, 01
+LOAD s4, 65  ; 'e'
+OUTPUT s4, 01
+LOAD s4, 74  ; 't'
+OUTPUT s4, 01
+LOAD s4, 65  ; 'e'
+OUTPUT s4, 01
+LOAD s4, 20  ; ' '
+OUTPUT s4, 01
+LOAD s4, 61  ; 'a'
+OUTPUT s4, 01
+LOAD s4, 20  ; ' '
+OUTPUT s4, 01
+LOAD s4, 6D  ; 'm'
+OUTPUT s4, 01
+LOAD s4, 65  ; 'e'
+OUTPUT s4, 01
+LOAD s4, 73  ; 's'
+OUTPUT s4, 01
+LOAD s4, 73  ; 's'
+OUTPUT s4, 01
+LOAD s4, 61  ; 'a'
+OUTPUT s4, 01
+LOAD s4, 67  ; 'g'
+OUTPUT s4, 01
+LOAD s4, 65  ; 'e'
+OUTPUT s4, 01
+LOAD s4, 0A  ; '\x0A'
+OUTPUT s4, 01
+; -- end print --
+
+LOAD s4, 00  ; print() void return
+
+; -- print("4. Delete all messages\n") on port 01 --
+LOAD s4, 34  ; '4'
+OUTPUT s4, 01
+LOAD s4, 2E  ; '.'
+OUTPUT s4, 01
+LOAD s4, 20  ; ' '
+OUTPUT s4, 01
+LOAD s4, 44  ; 'D'
+OUTPUT s4, 01
+LOAD s4, 65  ; 'e'
+OUTPUT s4, 01
+LOAD s4, 6C  ; 'l'
+OUTPUT s4, 01
+LOAD s4, 65  ; 'e'
+OUTPUT s4, 01
+LOAD s4, 74  ; 't'
+OUTPUT s4, 01
+LOAD s4, 65  ; 'e'
+OUTPUT s4, 01
+LOAD s4, 20  ; ' '
+OUTPUT s4, 01
+LOAD s4, 61  ; 'a'
+OUTPUT s4, 01
+LOAD s4, 6C  ; 'l'
+OUTPUT s4, 01
+LOAD s4, 6C  ; 'l'
+OUTPUT s4, 01
+LOAD s4, 20  ; ' '
+OUTPUT s4, 01
+LOAD s4, 6D  ; 'm'
+OUTPUT s4, 01
+LOAD s4, 65  ; 'e'
+OUTPUT s4, 01
+LOAD s4, 73  ; 's'
+OUTPUT s4, 01
+LOAD s4, 73  ; 's'
+OUTPUT s4, 01
+LOAD s4, 61  ; 'a'
+OUTPUT s4, 01
+LOAD s4, 67  ; 'g'
+OUTPUT s4, 01
+LOAD s4, 65  ; 'e'
+OUTPUT s4, 01
+LOAD s4, 73  ; 's'
+OUTPUT s4, 01
+LOAD s4, 0A  ; '\x0A'
+OUTPUT s4, 01
+; -- end print --
+
+LOAD s4, 00  ; print() void return
+
+; -- print("Configure the volume via the switches onboard.\n") on port 01 --
+LOAD s4, 43  ; 'C'
+OUTPUT s4, 01
+LOAD s4, 6F  ; 'o'
+OUTPUT s4, 01
+LOAD s4, 6E  ; 'n'
+OUTPUT s4, 01
+LOAD s4, 66  ; 'f'
+OUTPUT s4, 01
+LOAD s4, 69  ; 'i'
+OUTPUT s4, 01
+LOAD s4, 67  ; 'g'
+OUTPUT s4, 01
+LOAD s4, 75  ; 'u'
+OUTPUT s4, 01
+LOAD s4, 72  ; 'r'
+OUTPUT s4, 01
+LOAD s4, 65  ; 'e'
+OUTPUT s4, 01
+LOAD s4, 20  ; ' '
+OUTPUT s4, 01
+LOAD s4, 74  ; 't'
+OUTPUT s4, 01
+LOAD s4, 68  ; 'h'
+OUTPUT s4, 01
+LOAD s4, 65  ; 'e'
+OUTPUT s4, 01
+LOAD s4, 20  ; ' '
+OUTPUT s4, 01
+LOAD s4, 76  ; 'v'
+OUTPUT s4, 01
+LOAD s4, 6F  ; 'o'
+OUTPUT s4, 01
+LOAD s4, 6C  ; 'l'
+OUTPUT s4, 01
+LOAD s4, 75  ; 'u'
+OUTPUT s4, 01
+LOAD s4, 6D  ; 'm'
+OUTPUT s4, 01
+LOAD s4, 65  ; 'e'
+OUTPUT s4, 01
+LOAD s4, 20  ; ' '
+OUTPUT s4, 01
+LOAD s4, 76  ; 'v'
+OUTPUT s4, 01
+LOAD s4, 69  ; 'i'
+OUTPUT s4, 01
+LOAD s4, 61  ; 'a'
+OUTPUT s4, 01
+LOAD s4, 20  ; ' '
+OUTPUT s4, 01
+LOAD s4, 74  ; 't'
+OUTPUT s4, 01
+LOAD s4, 68  ; 'h'
+OUTPUT s4, 01
+LOAD s4, 65  ; 'e'
+OUTPUT s4, 01
+LOAD s4, 20  ; ' '
+OUTPUT s4, 01
+LOAD s4, 73  ; 's'
+OUTPUT s4, 01
+LOAD s4, 77  ; 'w'
+OUTPUT s4, 01
+LOAD s4, 69  ; 'i'
+OUTPUT s4, 01
+LOAD s4, 74  ; 't'
+OUTPUT s4, 01
+LOAD s4, 63  ; 'c'
+OUTPUT s4, 01
+LOAD s4, 68  ; 'h'
+OUTPUT s4, 01
+LOAD s4, 65  ; 'e'
+OUTPUT s4, 01
+LOAD s4, 73  ; 's'
+OUTPUT s4, 01
+LOAD s4, 20  ; ' '
+OUTPUT s4, 01
+LOAD s4, 6F  ; 'o'
+OUTPUT s4, 01
+LOAD s4, 6E  ; 'n'
+OUTPUT s4, 01
+LOAD s4, 62  ; 'b'
+OUTPUT s4, 01
+LOAD s4, 6F  ; 'o'
+OUTPUT s4, 01
+LOAD s4, 61  ; 'a'
+OUTPUT s4, 01
+LOAD s4, 72  ; 'r'
+OUTPUT s4, 01
+LOAD s4, 64  ; 'd'
+OUTPUT s4, 01
+LOAD s4, 2E  ; '.'
+OUTPUT s4, 01
+LOAD s4, 0A  ; '\x0A'
+OUTPUT s4, 01
+; -- end print --
+
+LOAD s4, 00  ; print() void return
+L_print_menu_END:
+; Epilouge
+ADD sF, 01    ; Move SP up
+FETCH sE, (sF)  ; Pop sE from stack
+ADD sF, 01    ; Move SP up
+FETCH sD, (sF)  ; Pop sD from stack
+ADD sF, 01    ; Move SP up
+FETCH sC, (sF)  ; Pop sC from stack
+ADD sF, 01    ; Move SP up
+FETCH sB, (sF)  ; Pop sB from stack
+ADD sF, 01    ; Move SP up
+FETCH sA, (sF)  ; Pop sA from stack
+RETURN
+
+main:
+
+; -- Calling clean_screen() --
+CALL clean_screen
+LOAD s4, s0  ; Capture return value from clean_screen
+; -- End Call -- 
+
+LOAD s4, 00
+LOAD sA, s4  ; state = [result]
+LOAD s4, 00
+LOAD sB, s4  ; current_number_of_recordings = [result]
+
+L_WHILE_START_6:
+; Infinite loop detected (while 1)
+
+; -- Calling clean_screen() --
+CALL clean_screen
+LOAD s4, s0  ; Capture return value from clean_screen
+; -- End Call -- 
+
+LOAD s4, sA  ; Copy 'state' for math
+LOAD s5, 00
+COMPARE s4, s5
+JUMP NZ, L_ELSE_7
+; --- IF BLOCK ---
+
+; -- Calling print_menu() --
+CALL print_menu
+LOAD s4, s0  ; Capture return value from print_menu
+; -- End Call -- 
+
+INPUT s5, 01  ; read from port 01
+LOAD s4, s5  ; keypad_input = [result]
+
+L_WHILE_START_8:
+LOAD s5, s4  ; Copy 'keypad_input' for math
+LOAD s6, 00
+COMPARE s5, s6
+JUMP NZ, L_WHILE_END_8  ; Jump away if NOT equal
+INPUT s5, 01  ; read from port 01
+LOAD s4, s5  ; keypad_input = [result]
+JUMP L_WHILE_START_8
+L_WHILE_END_8:
+LOAD s5, s4  ; Copy 'keypad_input' for math
+LOAD s6, 00
+COMPARE s5, s6
+JUMP Z, L_IF_END_9
+; --- IF BLOCK ---
+LOAD s5, s4  ; Copy 'keypad_input' for math
+LOAD s6, 11
+COMPARE s5, s6
+JUMP NZ, L_ELSE_10
+; --- IF BLOCK ---
+LOAD s5, 01
+LOAD sA, s5  ; state = [result]
+JUMP L_IF_END_10  ; Skip the else block
+
+L_ELSE_10:
+; --- ELSE BLOCK ---
+LOAD s5, s4  ; Copy 'keypad_input' for math
+LOAD s6, 12
+COMPARE s5, s6
+LOAD s5, 01  ; Assume True
+JUMP Z, cmp_true_11        ; If Zero flag is set, they are equal!
+LOAD s5, 00  ; If no jump, it was False
+cmp_true_11:
+
+L_IF_END_10:
+
+L_IF_END_9:
+JUMP L_IF_END_7  ; Skip the else block
+
+L_ELSE_7:
+; --- ELSE BLOCK ---
+LOAD s4, sA  ; Copy 'state' for math
+LOAD s6, 01
+COMPARE s4, s6
+LOAD s4, 01  ; Assume True
+JUMP Z, cmp_true_12        ; If Zero flag is set, they are equal!
+LOAD s4, 00  ; If no jump, it was False
+cmp_true_12:
+
+L_IF_END_7:
+JUMP L_WHILE_START_6
+L_WHILE_END_6:
+L_main_END:
+RETURN
